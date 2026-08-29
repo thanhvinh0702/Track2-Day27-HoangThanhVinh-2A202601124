@@ -9,8 +9,16 @@ with completed_orders as (
 ),
 active_customers as (
     select *
-    from {{ ref('stg_customers') }}
-    where is_active = true
+    from (
+        select c.*,
+               row_number() over (
+                   partition by customer_id
+                   order by valid_from desc nulls last
+               ) as version_rank
+        from {{ ref('stg_customers') }} c
+        where is_active = true
+    ) deduped
+    where version_rank = 1
 )
 select
     o.order_date,

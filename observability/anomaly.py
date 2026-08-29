@@ -39,7 +39,9 @@ def mad_detector(current: float, history: Iterable[float], threshold: float = 3.
     median = float(np.median(values))
     mad = float(np.median(np.abs(values - median)))
     if mad == 0:
-        return {"is_anomaly": False, "score": 0.0, "method": "mad", "reason": "mad_is_zero_todo"}
+        score = float("inf") if float(current) != median else 0.0
+        return {"is_anomaly": score > threshold, "score": score, "method": "mad",
+                "reason": f"median={median:.3f}, mad=0; threshold={threshold}"}
     modified_z = 0.6745 * abs(float(current) - median) / mad
     return {
         "is_anomaly": bool(modified_z > threshold),
@@ -68,13 +70,26 @@ def detect_anomaly(
     instructor may include `day_of_week`, `same_segment_history`,
     `metric_name`, `known_event`, and `trend`.
     """
+    values = list(history)
     if method == "mad":
         return mad_detector(current, history)
-    if method in {"zscore", "auto"}:
-        result = zscore_detector(current, history, threshold=threshold)
-        if method == "auto":
+    if method == "auto":
+        context = context or {}
+        segment = context.get("same_segment_history")
+        baseline = list(segment) if segment is not None and len(segment) >= 3 else values
+        if len(baseline) >= 5:
+            result = mad_detector(current, baseline, threshold=max(3.5, threshold))
+            result["method"] = "auto:mad"
+        else:
+            result = zscore_detector(current, baseline, threshold=threshold)
             result["method"] = "auto:zscore"
-            if context:
-                result["reason"] += "; context_ignored_by_starter=true"
+        if context.get("known_event"):
+            result["is_anomaly"] = False
+            result["reason"] += "; known_event=true"
+        elif segment is not None:
+            result["reason"] += "; same_segment_baseline=true"
+        return result
+    if method == "zscore":
+        result = zscore_detector(current, history, threshold=threshold)
         return result
     raise ValueError(f"Unsupported method: {method}")

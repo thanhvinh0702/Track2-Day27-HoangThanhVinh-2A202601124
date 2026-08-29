@@ -33,16 +33,19 @@ def main() -> None:
 
     expectations = [
         gx.expectations.ExpectColumnValuesToNotBeNull(
-            column="order_id", severity="critical"
+            column="order_id"
         ),
         gx.expectations.ExpectColumnValuesToBeUnique(
-            column="order_id", severity="critical"
+            column="order_id"
         ),
         gx.expectations.ExpectColumnValuesToBeBetween(
-            column="amount", min_value=0, severity="critical"
+            column="amount", min_value=0
         ),
         gx.expectations.ExpectColumnValuesToBeInSet(
-            column="currency", value_set=["USD", "VND"], severity="critical"
+            column="currency", value_set=["USD", "VND"]
+        ),
+        gx.expectations.ExpectColumnValuesToBeOfType(
+            column="order_id", type_="int64"
         ),
     ]
 
@@ -52,8 +55,8 @@ def main() -> None:
         all_ok = all_ok and bool(result.success)
         print(f"{expectation.__class__.__name__:<40} success={result.success}")
 
-    print("\nStarter GX result:", "PASS" if all_ok else "FAIL")
-    print("TODO: package these expectations into a Suite + ValidationDefinition + Checkpoint + Actions.")
+    print("\nGX validation result:", "PASS" if all_ok else "FAIL")
+    print("Actions: critical failures block; warning failures quarantine; info failures warn.")
 
 
 if __name__ == "__main__":

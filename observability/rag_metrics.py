@@ -34,4 +34,14 @@ def detect_embedding_norm_shift(
     No embedding model is required for the starter lab. Hidden evaluation can
     feed precomputed norms/similarities through this stable interface.
     """
-    return {"is_anomaly": False, "score": 0.0, "method": "not_implemented"}
+    cur = np.asarray(list(current_norms), dtype=float)
+    base = np.asarray(list(baseline_norms), dtype=float)
+    if cur.size == 0 or base.size < 3:
+        return {"is_anomaly": False, "score": 0.0, "method": "zscore", "reason": "insufficient_history"}
+    current = float(np.mean(cur))
+    mean = float(np.mean(base))
+    std = float(np.std(base))
+    score = abs(current - mean) / std if std else (float("inf") if current != mean else 0.0)
+    return {"is_anomaly": bool(score > 3.0), "score": float(score),
+            "method": "embedding_norm_zscore",
+            "reason": f"baseline_mean={mean:.4f}, current_mean={current:.4f}, std={std:.4f}"}

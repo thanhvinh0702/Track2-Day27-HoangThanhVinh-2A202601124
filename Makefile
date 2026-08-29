@@ -1,4 +1,5 @@
-PYTHON ?= python
+PYTHON ?= python3
+DBT ?= dbt
 
 .PHONY: reset baseline tests gx dbt dashboard generate
 
@@ -16,7 +17,7 @@ gx:
 
 dbt:
 	$(PYTHON) scripts/sync_dbt_seeds.py
-	dbt build --project-dir dbt_project --profiles-dir dbt_project
+	$(DBT) build --project-dir dbt_project --profiles-dir dbt_project
 
 dashboard:
 	streamlit run dashboard/app.py

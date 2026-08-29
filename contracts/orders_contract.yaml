@@ -4,6 +4,8 @@ freshness:
   column: updated_at
   max_delay_minutes: 30
   severity: warning
+  # The lab fixture is replayed data; use a deterministic ingestion as-of time.
+  reference_time: '2026-08-28T10:30:00Z'
 columns:
   order_id:
     type: integer
